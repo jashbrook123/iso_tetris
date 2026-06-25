@@ -54,33 +54,14 @@ def collision(board,piece,newx,newy,matrix):
     return False
 
 def merge_piece(board,piece):
+    net_copy = np.copy(board.grid)
     for row in range(len(piece.matrix)):
         for col in range(len(piece.matrix[row])):
             if piece.matrix[row][col] != 0:
                 boardx = piece.x + col
                 boardy = piece.y + row
-                (board.grid)[boardy][boardx] = piece.matrix[row][col]
-
-def clear_terminal():
-    print("\033[H\033[J")
-
-def render_board(board,piece):
-    clear_terminal()
-    for y in range(board.height):
-        line = ""
-
-        for x in range(board.width):
-            cell = board.grid[y][x]
-
-            for row in range(len(piece.matrix)):
-                for col in range(len(piece.matrix[row])):    
-                    if piece.matrix[row][col] != 0:
-                        if piece.y + row == y and piece.x + col == x:
-                            cell = piece.matrix[row][col]
-
-            if cell != 0: line += "[]"
-            else: line += ".."
-        print(line)
+                (net_copy)[boardy][boardx] = piece.matrix[row][col]
+    return net_copy
 
 def clear_lines(board):
     temp_grid = []
@@ -108,7 +89,6 @@ class Board:
 
 class Piece:
     def __init__(self, shape):
-        print(shape)
         self.image_list = []
         self.matrix = [row[:] for row in tetrominoes[shape]]
         self.x = 3
@@ -118,77 +98,6 @@ class Piece:
         rotated = rotate_matrix(self.matrix)
         if not collision(board,self,self.x,self.y,rotated):
             self.matrix = rotated
-"""       
-class Z(Piece):
-    def __init__(self,shape):
-        super().__init__(shape)
-        shape_num = list(tetrominoes.keys()).index(shape) + 1
-        image = pygame.image.load(f"assets/{shape_num}.png")
-        image = pygame.transform.scale_by(image,2)
-        self.image_list.append(image)
-
-class S(Piece):
-    def __init__(self,shape):
-        super().__init__(shape)
-        for i in range(2):
-            image = pygame.image.load(f"assets/S{i+1}.png")
-            image = pygame.transform.scale_by(image,2)
-            self.image_list.append(image)
-        self.img = self.image_list[0]
-
-class J(Piece):
-    def __init__(self,shape):
-        super().__init__(shape)
-        for i in range(4):
-            image = pygame.image.load(f"assets/J{i+1}.png")
-            image = pygame.transform.scale_by(image,2)
-            self.image_list.append(image)
-        self.img = self.image_list[0]
-
-class L(Piece):
-    def __init__(self,shape):
-        super().__init__(shape)
-        for i in range(4):
-            image = pygame.image.load(f"assets/L{i+1}.png")
-            image = pygame.transform.scale_by(image,2)
-            self.image_list.append(image)
-        self.img = self.image_list[0]
-
-class I(Piece):
-    def __init__(self,shape):
-        super().__init__(shape)
-        for i in range(2):
-            image = pygame.image.load(f"assets/I{i+1}.png")
-            image = pygame.transform.scale_by(image,2)
-            self.image_list.append(image)
-        self.img = self.image_list[0]
-        
-class O(Piece):
-    def __init__(self,shape):
-        super().__init__(shape)
-        image = pygame.image.load(f"assets/O.png")
-        image = pygame.transform.scale_by(image,2)
-        self.image_list.append(image)
-        self.img = self.image_list[0]
-
-class T(Piece):
-    def __init__(self,shape):
-        super().__init__(shape)
-        for i in range(4):
-            image = pygame.image.load(f"assets/T{i+1}.png")
-            image = pygame.transform.scale_by(image,2)
-            self.image_list.append(image)
-        self.img = self.image_list[0]
-
-class LandedPiece:
-    def __init__(self, shape, x, y, orientation, image_list):
-        self.shape = shape
-        self.x = x
-        self.y = y
-        self.orientation = orientation
-        self.image_list = image_list
-        self.img = image_list[orientation]
-"""
 
 def game_tick(last_drop,drop_speed,game_running,piece,board,landed_pieces):
 
@@ -198,7 +107,7 @@ def game_tick(last_drop,drop_speed,game_running,piece,board,landed_pieces):
         if not collision(board, piece, piece.x, piece.y + 1, piece.matrix):
             piece.y += 1
         else: 
-            merge_piece(board, piece)
+            board.grid = merge_piece(board, piece)
             clear_lines(board)
             piece_type = random.choice(list(tetrominoes.keys()))
             piece = globals()["Piece"](piece_type)
@@ -221,8 +130,11 @@ def soft_drop(board,piece):
         piece.y += 1
     return piece
 
+def slam(board,piece):
+    while not collision(board, piece, piece.x, piece.y + 1, piece.matrix):
+        piece.y += 1
+    return piece
+
 def rotate_move(board,piece):
     piece.rotate(board)
     return piece
-
-
